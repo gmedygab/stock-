@@ -1,0 +1,130 @@
+Ecco un codice completo per un software che mostra i prezzi degli asset in tempo reale, utilizzando Python (backend FastAPI + WebSocket) e JavaScript (frontend).
+
+1. Backend (Python) - Prezzi in Tempo Reale via WebSocket
+Crea un file main.py:
+
+python
+Copy
+# File: main.py
+from fastapi import FastAPI, WebSocket
+from fastapi.staticfiles import StaticFiles
+import uvicorn
+import random
+import asyncio
+
+app = FastAPI()
+
+# Mock data: simula prezzi in tempo reale (sostituire con API vere come Yahoo Finance, Binance, ecc.)
+ASSETS = {
+    "AAPL": 180.0,
+    "TSLA": 700.0,
+    "BTC-USD": 50000.0,
+    "SPY": 450.0,
+}
+
+# Endpoint WebSocket per i prezzi in tempo reale
+@app.websocket("/ws/prices")
+async def websocket_prices(websocket: WebSocket):
+    await websocket.accept()
+    while True:
+        # Simula variazioni di prezzo casuali
+        for asset in ASSETS:
+            ASSETS[asset] += random.uniform(-2, 2)
+            ASSETS[asset] = round(ASSETS[asset], 2)
+        
+        # Invia i prezzi aggiornati al frontend
+        await websocket.send_json(ASSETS)
+        await asyncio.sleep(1)  # Aggiornamento ogni 1 secondo
+
+# Monta la cartella "static" per il frontend
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+2. Frontend (HTML + JavaScript)
+Crea una cartella static e al suo interno un file index.html:
+
+html
+Copy
+<!-- File: static/index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Prezzi Asset in Tempo Reale</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f2f2f2; }
+        .up { color: green; }
+        .down { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Prezzi Asset in Tempo Reale</h1>
+    <table id="prices-table">
+        <thead>
+            <tr>
+                <th>Asset</th>
+                <th>Prezzo</th>
+                <th>Variazione</th>
+            </tr>
+        </thead>
+        <tbody id="prices-body">
+            <!-- I dati verranno inseriti qui via JavaScript -->
+        </tbody>
+    </table>
+
+    <script>
+        const ws = new WebSocket("ws://localhost:8000/ws/prices");
+        const pricesBody = document.getElementById("prices-body");
+        const previousPrices = {};
+
+        ws.onmessage = (event) => {
+            const assets = JSON.parse(event.data);
+            pricesBody.innerHTML = "";  // Resetta la tabella
+
+            for (const [asset, price] of Object.entries(assets)) {
+                const row = document.createElement("tr");
+                
+                // Calcola la variazione
+                const change = previousPrices[asset] 
+                    ? price - previousPrices[asset] 
+                    : 0;
+                previousPrices[asset] = price;
+
+                // Aggiungi classi CSS per colorare la variazione
+                const changeClass = change >= 0 ? "up" : "down";
+                const changeSymbol = change >= 0 ? "↑" : "↓";
+
+                row.innerHTML = `
+                    <td>${asset}</td>
+                    <td>$${price.toFixed(2)}</td>
+                    <td class="${changeClass}">${changeSymbol} ${Math.abs(change).toFixed(2)}</td>
+                `;
+                pricesBody.appendChild(row);
+            }
+        };
+    </script>
+</body>
+</html>
+Run HTML
+3. Script per Eseguire il Software (run.sh)
+Crea un file run.sh per avviare tutto con un comando:
+
+bash
+Copy
+#!/bin/bash
+
+# Crea la cartella "static" se non esiste
+mkdir -p static
+
+# Avvia il backend FastAPI
+uvicorn main:app --reload --host 0.0.0.0 --port 8000 &
+echo "Backend in esecuzione su http://localhost:8000"
+
+# (Opzionale) Apri il browser automaticamente
+sleep 2
+xdg-open "http://localhost:8000"  # Linux
+# open "http://localhost:8000"    # macOS
+# start "http://localhost:8000"   # Windows

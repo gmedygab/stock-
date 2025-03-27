@@ -11,6 +11,7 @@ from components.advanced_tools import display_advanced_tools
 from components.advanced_charts import display_advanced_charts
 from components.portfolio_analyzer import display_portfolio_analyzer
 from components.backtesting import display_backtesting
+from components.portfolio_balance import display_portfolio_balance
 from utils.data_fetcher import get_stock_data
 from utils.translations import get_translation, languages, translations, translate_ui
 from plotly.subplots import make_subplots
@@ -276,7 +277,8 @@ st.sidebar.markdown(t("app_subtitle"))
 page = st.sidebar.radio(
     t("nav_dashboard"),
     [t("nav_dashboard"), t("nav_stock_analysis"), t("nav_portfolio"), t("nav_portfolio_analysis"), 
-     t("nav_market_overview"), t("nav_advanced_tools"), t("nav_charts"), t("nav_portfolio_tool"), t("nav_backtest"), "Guida"]
+     t("nav_market_overview"), t("nav_advanced_tools"), t("nav_charts"), t("nav_portfolio_tool"), 
+     t("nav_portfolio_balance"), t("nav_real_time_prices"), t("nav_backtest"), "Guida"]
 )
 
 # Sidebar - Stock Search
@@ -723,6 +725,16 @@ elif page == "Guida":
     from components.guida import display_guida
     display_guida()
     
+elif page == t("nav_portfolio_balance"):
+    # Use the portfolio balance component
+    st.title(t("portfolio_balance_title"))
+    display_portfolio_balance()
+
+elif page == t("nav_real_time_prices"):
+    # Use the real-time prices component
+    from components.real_time_prices import display_real_time_prices
+    display_real_time_prices()
+
 elif page == t("nav_backtest"):
     # Use the backtesting component
     display_backtesting()

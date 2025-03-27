@@ -216,9 +216,26 @@ def display_portfolio():
                 # Calculate total return
                 total_return = ((current_price - avg_cost) / avg_cost) * 100
                 
-                # Get pre-market and after-market data (if available)
+                # Get real-time, pre-market and after-market data (if available)
                 try:
                     stock_info = yf.Ticker(symbol).info
+                    
+                    # Get real-time price (if available)
+                    real_time_price = stock_info.get('regularMarketPrice', None)
+                    
+                    # Create indicator for real-time price comparison with current
+                    rt_price_indicator = ""
+                    if real_time_price is not None and real_time_price != current_price:
+                        if real_time_price > current_price:
+                            rt_price_indicator = " ↑"  # Up arrow with space
+                        else:
+                            rt_price_indicator = " ↓"  # Down arrow with space
+                        
+                        # Calculate updated position value with real-time price
+                        position_value = real_time_price * shares
+                        
+                        # Update current price to real-time price
+                        current_price = real_time_price
                     
                     # Pre-market data (variazione rispetto alla chiusura del giorno precedente)
                     pre_market_price = stock_info.get('preMarketPrice', None)
@@ -245,12 +262,13 @@ def display_portfolio():
                 except Exception as e:
                     pre_market_combined = "N/A"
                     post_market_combined = "N/A"
+                    rt_price_indicator = ""
                     
                 portfolio_data.append({
                     'Symbol': symbol,
                     'Shares': shares,
                     'Avg Price': f"${avg_cost:.2f}",
-                    'Current Price': f"${current_price:.2f}",
+                    'Current Price': f"${current_price:.2f}{rt_price_indicator}",
                     'Pre-Market': pre_market_combined,
                     'After-Market': post_market_combined,
                     'Position Value': f"${position_value:.2f}",
@@ -269,6 +287,14 @@ def display_portfolio():
             def highlight_performance(val):
                 # Per valori percentuali o stringhe con variazioni percentuali
                 try:
+                    # Gestione per colonna Current Price che potrebbe avere frecce di indicazione
+                    if isinstance(val, str) and '$' in val:
+                        # Check se il valore contiene indicatori di movimento (frecce)
+                        if '↑' in val:
+                            return 'background-color: rgba(0, 255, 0, 0.2)'
+                        elif '↓' in val:
+                            return 'background-color: rgba(255, 0, 0, 0.2)'
+                    
                     if isinstance(val, str) and '%' in val:
                         # Caso 1: Valori con formato "+/-X.XX%" (come ad esempio le colonne Pre-Market/After-Market)
                         if val.startswith('+') or val.startswith('-'):
@@ -312,7 +338,7 @@ def display_portfolio():
                 
                 return ''
             
-            styled_df = df.style.map(highlight_performance, subset=['Daily Change %', 'Total Return %', 'Pre-Market', 'After-Market'])
+            styled_df = df.style.map(highlight_performance, subset=['Daily Change %', 'Total Return %', 'Pre-Market', 'After-Market', 'Current Price'])
             
             st.dataframe(styled_df, use_container_width=True)
             

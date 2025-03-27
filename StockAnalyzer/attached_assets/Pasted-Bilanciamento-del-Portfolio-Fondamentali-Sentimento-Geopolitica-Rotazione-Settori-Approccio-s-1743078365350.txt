@@ -1,0 +1,159 @@
+Bilanciamento del Portfolio: Fondamentali, Sentimento, Geopolitica & Rotazione Settori
+(Approccio sistematico per programmatori/quant trader)
+
+Un portfolio bilanciato non si basa solo su prezzi storici, ma integra dati multidimensionali: fondamentali finanziari, sentiment del mercato, rischi geopolitici e dinamiche settoriali. Ecco come implementarlo in modo strutturato.
+
+1. Bilanciamento Basato su Fondamentali
+Cosa guardare:
+
+Metriche finanziarie: P/E, P/B, EBITDA, debito/equity, crescita ricavi.
+
+Quality scoring: ROE, margini operativi, stabilità degli utili.
+
+Dati macro: Tassi d’interesse, inflazione, PIL.
+
+Implementazione:
+
+python
+Copy
+import pandas as pd
+
+def fundamental_score(stock_data):
+    # Ponderazione di metriche (es: 40% P/E, 30% ROE, 20% Debt/Equity, 10% Growth)
+    pe_weight = 0.4
+    roe_weight = 0.3
+    debt_equity_weight = 0.2
+    revenue_growth_weight = 0.1
+    
+    # Normalizzazione (es: min-max scaling)
+    stock_data['pe_score'] = 1 - (stock_data['pe_ratio'] / stock_data['pe_ratio'].max())
+    stock_data['roe_score'] = stock_data['roe'] / stock_data['roe'].max()
+    
+    # Calcolo punteggio totale
+    stock_data['fundamental_score'] = (
+        pe_weight * stock_data['pe_score'] +
+        roe_weight * stock_data['roe_score'] +
+        debt_equity_weight * (1 - stock_data['debt_to_equity']) +
+        revenue_growth_weight * stock_data['revenue_growth']
+    )
+    return stock_data
+Applicazione:
+
+Assegnare pesi maggiori a azioni con:
+
+Basso P/E (sottovalutate)
+
+Alto ROE (efficienza operativa)
+
+Debt/Equity basso (meno rischiose)
+
+2. Bilanciamento Basato su Sentiment
+Fonti dati:
+
+News finanziarie (NLP su Bloomberg, Reuters).
+
+Social media (Reddit, Twitter).
+
+Analisi degli earnings call (tonalità positiva/negativa).
+
+Implementazione:
+
+python
+Copy
+from transformers import pipeline
+
+sentiment_analyzer = pipeline("sentiment-analysis")
+
+def get_sentiment_score(text):
+    result = sentiment_analyzer(text)[0]
+    return 1 if result['label'] == 'POSITIVE' else -1
+
+# Esempio: Analisi titoli di giornale
+news_headlines = ["Apple beats earnings expectations", "Geopolitical tensions rise in Middle East"]
+sentiment_scores = [get_sentiment_score(headline) for headline in news_headlines]
+average_sentiment = sum(sentiment_scores) / len(sentiment_scores)
+Strategia:
+
+Sovrappesare settori con sentiment positivo.
+
+Ridurre esposizione a asset con notizie negative ricorrenti.
+
+3. Fattore Geopolitico
+Cosa monitorare:
+
+Conflitti (es: guerra Ucraina-Russia).
+
+Sanzioni economiche.
+
+Elezioni politiche (es: USA, UE).
+
+Approccio:
+
+Mappare paesi/settori a rischio (es: energia → Medio Oriente, semiconduttori → Taiwan).
+
+Usare un "risk score geopolitico" (es: dati di Bloomberg o ICE).
+
+python
+Copy
+geopolitical_risk_db = {
+    "US": 0.1,  # Basso rischio
+    "Russia": 0.9,  # Alto rischio
+    "Taiwan": 0.7,  # Medio-alto
+}
+
+def adjust_allocation_by_geopolitics(portfolio, risk_db):
+    for stock in portfolio:
+        country = get_country_from_ticker(stock.ticker)
+        portfolio[stock.ticker].weight *= (1 - risk_db.get(country, 0.5))
+    return portfolio
+4. Rotazione Settoriale
+Logica:
+
+I settori performano diversamente in base al ciclo economico:
+
+Riscaldamento economico: Tecnologia, crescita.
+
+Recessione: Utilities, beni di consumo.
+
+Implementazione:
+
+python
+Copy
+sector_rotation_model = {
+    "expansion": ["TECH", "DISCRETIONARY"],
+    "recession": ["UTILITIES", "STAPLES"],
+    "stagflation": ["ENERGY", "HEALTHCARE"]
+}
+
+current_phase = predict_economic_phase(gdp_growth, inflation)  # Usa ML o regole euristiche
+recommended_sectors = sector_rotation_model[current_phase]
+Ottimizzazione:
+
+Aumentare peso settori raccomandati dal modello.
+
+Ridurre settori in fase calante.
+
+5. Integrazione dei Fattori
+Per un bilanciamento ottimale, combinare tutti i segnali in un modello a pesi dinamici:
+
+python
+Copy
+def calculate_dynamic_weights(stock):
+    fundamental_w = 0.4
+    sentiment_w = 0.3
+    geopolitical_w = 0.2
+    sector_w = 0.1
+    
+    total_score = (
+        fundamental_w * stock.fundamental_score +
+        sentiment_w * stock.sentiment_score +
+        geopolitical_w * (1 - geopolitical_risk) +
+        sector_w * sector_momentum_score
+    )
+    return total_score
+Conclusione
+Un portfolio bilanciato richiede:
+✅ Fondamentali → Valutazione oggettiva.
+✅ Sentiment → Reattività al mercato.
+✅ Geopolitica → Gestione del rischio.
+✅ Rotazione settori → Adattamento al ciclo economico.

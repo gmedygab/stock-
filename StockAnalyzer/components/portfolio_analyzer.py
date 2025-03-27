@@ -6,6 +6,7 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 import yfinance as yf
 from datetime import datetime, timedelta
+import math
 
 def display_portfolio_analyzer():
     """
@@ -19,11 +20,12 @@ def display_portfolio_analyzer():
         return
     
     # Create tabs for different analysis views
-    tab1, tab2, tab3, tab4 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "Composizione", 
         "Analisi del Rischio", 
         "Correlazione Titoli", 
-        "Simulazione Monte Carlo"
+        "Simulazione Monte Carlo",
+        "Calcolatore Interesse Composto"
     ])
     
     with tab1:
@@ -37,6 +39,9 @@ def display_portfolio_analyzer():
     
     with tab4:
         display_monte_carlo_simulation()
+        
+    with tab5:
+        display_compound_interest_calculator()
 
 
 def display_portfolio_composition():
@@ -1377,3 +1382,381 @@ def display_monte_carlo_stats(results, initial_value, confidence):
         
         Sarebbe consigliabile rivedere la strategia di investimento e la composizione del portafoglio.
         """)
+def display_compound_interest_calculator():
+    """
+    Display a compound interest calculator integrated with portfolio data
+    """
+    st.subheader("Calcolatore di Interesse Composto")
+    
+    st.markdown("""
+    Questo strumento ti permette di calcolare la crescita potenziale del tuo investimento nel tempo, 
+    tenendo conto dell'interesse composto. Puoi partire dal valore attuale del tuo portafoglio
+    o inserire un valore personalizzato.
+    """)
+    
+    # Get current portfolio value if available
+    total_portfolio_value = 0
+    if st.session_state.portfolio:
+        for symbol, position in st.session_state.portfolio.items():
+            try:
+                shares = position['shares']
+                stock = yf.Ticker(symbol)
+                info = stock.info
+                current_price = info.get('regularMarketPrice', info.get('currentPrice', 0))
+                total_portfolio_value += shares * current_price
+            except Exception as e:
+                st.warning(f"Errore nel recuperare il prezzo attuale per {symbol}: {str(e)}")
+    
+    # Create columns for inputs
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("Dati Iniziali")
+        
+        # Option to use current portfolio value or custom value
+        use_portfolio_value = False
+        if total_portfolio_value > 0:
+            use_portfolio_value = st.checkbox(
+                "Usa il valore attuale del portafoglio", 
+                value=True,
+                help="Deseleziona per inserire manualmente un capitale iniziale diverso"
+            )
+            
+        if use_portfolio_value and total_portfolio_value > 0:
+            initial_investment = total_portfolio_value
+            st.info(f"Valore attuale del portafoglio: €{total_portfolio_value:,.2f}")
+        else:
+            initial_investment = st.number_input(
+                "Investimento iniziale (€)",
+                min_value=0.0,
+                value=10000.0,
+                step=1000.0,
+                format="%.2f",
+                help="Inserisci l'importo iniziale con cui vuoi iniziare l'investimento"
+            )
+        
+        monthly_contribution = st.number_input(
+            "Contributo mensile (€)",
+            min_value=0.0,
+            value=500.0,
+            step=100.0,
+            format="%.2f"
+        )
+        
+        years = st.slider(
+            "Durata (anni)",
+            min_value=1,
+            max_value=50,
+            value=20,
+            step=1
+        )
+        
+        interest_rate = st.slider(
+            "Tasso di interesse annuo (%)",
+            min_value=0.0,
+            max_value=15.0,
+            value=7.0,
+            step=0.1,
+            format="%.1f"
+        )
+        
+        # Aggiungiamo l'opzione per i dividendi
+        dividend_yield = st.slider(
+            "Percentuale dividendi annui (%)",
+            min_value=0.0,
+            max_value=10.0,
+            value=2.0,
+            step=0.1,
+            format="%.1f",
+            help="Percentuale media dei dividendi annui distribuiti dalle azioni nel portafoglio"
+        )
+        
+        # Opzione per reinvestire i dividendi
+        reinvest_dividends = st.checkbox("Reinvestire i dividendi", value=True,
+            help="Se selezionato, i dividendi vengono reinvestiti automaticamente aumentando il capitale")
+        
+        compound_frequency = st.selectbox(
+            "Frequenza di capitalizzazione",
+            options=["Mensile", "Trimestrale", "Semestrale", "Annuale"],
+            index=0
+        )
+        
+        frequency_map = {
+            "Mensile": 12,
+            "Trimestrale": 4,
+            "Semestrale": 2,
+            "Annuale": 1
+        }
+        n = frequency_map[compound_frequency]
+    
+    with col2:
+        st.subheader("Risultati")
+        
+        # Calculate compound interest with dividends
+        def compound_interest_with_dividends(P, PMT, r, d, t, n, reinvest=True):
+            """
+            Calculate compound interest with regular contributions and dividends
+            
+            Parameters:
+            P (float): Initial principal
+            PMT (float): Regular monthly contribution
+            r (float): Annual interest rate (%)
+            d (float): Annual dividend yield (%)
+            t (int): Time in years
+            n (int): Compounding frequency per year
+            reinvest (bool): Whether to reinvest dividends
+            
+            Returns:
+            tuple: (total future value, future value of initial investment, future value of contributions, total dividends)
+            """
+            r_decimal = r / 100
+            d_decimal = d / 100
+            
+            # Total effective rate if dividends are reinvested
+            effective_rate = r_decimal
+            if reinvest:
+                effective_rate += d_decimal
+            
+            # Calculate future value of initial investment
+            FV_initial = P * (1 + effective_rate/n)**(n*t)
+            
+            # Handle the case where effective rate is close to zero
+            if abs(effective_rate) < 0.0001:
+                FV_contributions = PMT * n * t
+            else:
+                FV_contributions = PMT * (((1 + effective_rate/n)**(n*t) - 1) / (effective_rate/n))
+            
+            total = FV_initial + FV_contributions
+            
+            # Calculate dividends if not reinvested
+            dividends = 0
+            if not reinvest:
+                # Simple approximation of dividends (not exact but reasonable)
+                avg_balance = (P + total) / 2  # Average balance over time
+                dividends = avg_balance * d_decimal * t
+                total += dividends
+            
+            return round(total, 2), round(FV_initial, 2), round(FV_contributions, 2), round(dividends if not reinvest else 0, 2)
+        
+        future_value, fv_initial, fv_contributions, dividends_not_reinvested = compound_interest_with_dividends(
+            initial_investment, 
+            monthly_contribution, 
+            interest_rate,
+            dividend_yield,
+            years, 
+            n,
+            reinvest_dividends
+        )
+        
+        # Calculate values for each year for the chart
+        years_range = list(range(years + 1))
+        values = []
+        values_without_dividends = []
+        
+        # Calculate values with and without dividends for comparison
+        for t in years_range:
+            if t == 0:
+                # At year 0, it's just the initial investment
+                values.append(initial_investment)
+                values_without_dividends.append(initial_investment)
+                continue
+                
+            # With dividends
+            fv, _, _, _ = compound_interest_with_dividends(
+                initial_investment, 
+                monthly_contribution, 
+                interest_rate,
+                dividend_yield,
+                t, 
+                n,
+                reinvest_dividends
+            )
+            values.append(fv)
+            
+            # Without dividends (for comparison)
+            fv_no_div, _, _, _ = compound_interest_with_dividends(
+                initial_investment, 
+                monthly_contribution, 
+                interest_rate,
+                0,  # No dividends
+                t, 
+                n,
+                True
+            )
+            values_without_dividends.append(fv_no_div)
+        
+        # Calculate total growth from dividends
+        growth_from_dividends = future_value - values_without_dividends[-1]
+        
+        # Calculate total investment
+        total_investment = initial_investment + (monthly_contribution * 12 * years)
+        
+        # Calculate total returns
+        total_returns = future_value - total_investment
+        
+        # Display metrics
+        st.metric(
+            label="Valore Finale dell'Investimento",
+            value=f"€{future_value:,.2f}",
+            delta=f"€{total_returns:,.2f}"
+        )
+        
+        # Display breakdown
+        dividend_text = ""
+        if reinvest_dividends:
+            dividend_text = f"""
+            - Crescita aggiuntiva da dividendi reinvestiti: €{growth_from_dividends:,.2f} ({(growth_from_dividends/future_value*100):.1f}% del totale)
+            """
+        else:
+            dividend_text = f"""
+            - Dividendi accumulati (non reinvestiti): €{dividends_not_reinvested:,.2f}
+            """
+        
+        st.markdown(f"""
+        **Dettaglio del Valore Finale:**
+        - Capitale iniziale investito: €{initial_investment:,.2f}
+        - Totale contributi mensili: €{monthly_contribution * 12 * years:,.2f}
+        - Rendimento totale: €{total_returns:,.2f} ({(total_returns/total_investment*100):.1f}%)
+        {dividend_text}
+        
+        **Crescita del Capitale Iniziale:** €{fv_initial:,.2f} (x{fv_initial/initial_investment:.2f})
+        """)
+        
+        # Add a download button for the calculation results
+        result_df = pd.DataFrame({
+            'Anno': years_range,
+            'Valore con Dividendi': values,
+            'Valore senza Dividendi': values_without_dividends,
+            'Impatto Dividendi': [v1 - v2 for v1, v2 in zip(values, values_without_dividends)]
+        })
+        
+        csv = result_df.to_csv(index=False)
+        st.download_button(
+            label="Scarica i risultati (CSV)",
+            data=csv,
+            file_name="risultati_interesse_composto.csv",
+            mime="text/csv"
+        )
+    
+    # Create a chart showing growth over time
+    st.subheader("Crescita dell'Investimento nel Tempo")
+    
+    # Prepare data for the chart
+    chart_data = pd.DataFrame({
+        'Anno': years_range,
+        'Con Dividendi': values,
+        'Senza Dividendi': values_without_dividends
+    })
+    
+    # Create a line chart showing both scenarios
+    fig = px.line(
+        chart_data,
+        x='Anno',
+        y=['Con Dividendi', 'Senza Dividendi'],
+        title='Impatto dei Dividendi sulla Crescita del Capitale',
+        labels={'value': 'Valore (€)', 'Anno': 'Anno', 'variable': 'Scenario'},
+        markers=True,
+        color_discrete_map={
+            'Con Dividendi': 'green',
+            'Senza Dividendi': 'blue'
+        }
+    )
+    
+    # Add initial investment as horizontal line
+    fig.add_shape(
+        type="line",
+        x0=0,
+        y0=initial_investment,
+        x1=years,
+        y1=initial_investment,
+        line=dict(color="red", width=2, dash="dash"),
+    )
+    
+    # Add annotation for initial investment
+    fig.add_annotation(
+        x=0,
+        y=initial_investment,
+        text=f"Investimento iniziale: €{initial_investment:,.0f}",
+        showarrow=True,
+        arrowhead=1,
+        ax=50,
+        ay=-30
+    )
+    
+    # Calculate total contributions
+    total_contributions = initial_investment + (monthly_contribution * 12 * years)
+    
+    # Add total contributions as horizontal line
+    fig.add_shape(
+        type="line",
+        x0=0,
+        y0=total_contributions,
+        x1=years,
+        y1=total_contributions,
+        line=dict(color="green", width=2, dash="dash"),
+    )
+    
+    # Add annotation for total contributions
+    fig.add_annotation(
+        x=years/2,
+        y=total_contributions,
+        text=f"Capitale investito totale: €{total_contributions:,.0f}",
+        showarrow=True,
+        arrowhead=1,
+        ax=0,
+        ay=-40
+    )
+    
+    # Update layout
+    fig.update_layout(
+        xaxis_title="Anni",
+        yaxis_title="Valore (€)",
+        yaxis_tickformat=",.0f",
+        template="plotly_white",
+        hovermode="x unified"
+    )
+    
+    # Display the chart
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # Add an explanation section
+    st.markdown("""
+    ### Come Funziona l'Interesse Composto
+    
+    L'interesse composto è il concetto per cui gli interessi generati da un capitale iniziale vengono reinvestiti
+    e generano a loro volta ulteriori interessi. Questo effetto, nel tempo, crea una crescita esponenziale del capitale.
+    
+    #### Formula Utilizzata
+    
+    La formula generale per calcolare il valore futuro (FV) è:
+    
+    FV = P × (1 + (r+d)/n)^(n×t) + PMT × [(1 + (r+d)/n)^(n×t) - 1] / ((r+d)/n)
+    
+    Dove:
+    - P = Investimento iniziale
+    - r = Tasso di interesse annuo (in decimale)
+    - d = Rendimento dividendi annuo (in decimale)
+    - n = Frequenza di capitalizzazione all'anno
+    - t = Durata in anni
+    - PMT = Contributo mensile
+    
+    #### Impatto dei Dividendi
+    
+    I dividendi hanno un impatto significativo sulla crescita di lungo termine di un investimento:
+    
+    - **Dividendi reinvestiti**: Quando i dividendi vengono reinvestiti, entrano immediatamente nel ciclo dell'interesse composto,
+      accelerando la crescita del capitale (come mostrato nel grafico).
+    
+    - **Dividendi non reinvestiti**: Se i dividendi non vengono reinvestiti, possono comunque fornire un flusso di reddito
+      regolare, ma non contribuiscono alla crescita esponenziale del capitale principale.
+    
+    #### Fattori Critici per Massimizzare i Rendimenti
+    
+    1. **Iniziare presto**: Il tempo è il fattore più importante nell'interesse composto.
+    2. **Contribuire regolarmente**: Anche piccole somme aggiunte regolarmente fanno una grande differenza.
+    3. **Reinvestire i dividendi**: Reinvestire automaticamente aumenta l'effetto dell'interesse composto.
+    4. **Minimizzare le commissioni**: Le commissioni riducono il capitale che può generare interessi futuri.
+    5. **Ottimizzare il tasso di rendimento**: Anche piccole differenze nei tassi hanno impatti enormi nel lungo periodo.
+    6. **Selezionare titoli con dividendi**: Investire in azioni che pagano dividendi può aumentare significativamente
+       il rendimento complessivo, specialmente su orizzonti temporali lunghi.
+    """)

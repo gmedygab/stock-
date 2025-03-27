@@ -15,7 +15,10 @@ translations = {
         "nav_advanced_tools": "Advanced Tools",
         "nav_charts": "Advanced Charts",
         "nav_portfolio_tool": "Portfolio Analyzer",
+        "nav_portfolio_balance": "Portfolio Balance",
+        "nav_real_time_prices": "Real-Time Prices",
         "nav_backtest": "Backtest",
+        "portfolio_balance_title": "Portfolio Balance",
         "dashboard_title": "Financial Dashboard",
         "stock_analysis_title": "Detailed Analysis",
         "portfolio_title": "Portfolio Tracker",
@@ -64,7 +67,20 @@ translations = {
         "risk_reduction": "Risk Reduction",
         "return_maximization": "Return Maximization",
         # Footer
-        "footer": "FinVision - Advanced Stock Market Analysis Platform"
+        "footer": "FinVision - Advanced Stock Market Analysis Platform",
+        # Real-time prices section
+        "Real-Time Prices": "Real-Time Prices",
+        "Symbol": "Symbol",
+        "Price": "Price",
+        "Change": "Change",
+        "Last Update": "Last Update",
+        "Update Interval (seconds)": "Update Interval (seconds)",
+        "Auto-updating every": "Auto-updating every",
+        "seconds": "seconds",
+        "Note: Prices are fetched from Yahoo Finance API and may be delayed by a few minutes for some exchanges.": "Note: Prices are fetched from Yahoo Finance API and may be delayed by a few minutes for some exchanges.",
+        "About Real-Time Updates": "About Real-Time Updates",
+        "This table automatically updates every": "This table automatically updates every",
+        "Trend": "Trend"
     },
     "it": {  # Italian
         "app_title": "FinVision - Analisi del Mercato Azionario",
@@ -77,7 +93,10 @@ translations = {
         "nav_advanced_tools": "Strumenti Avanzati",
         "nav_charts": "Grafici Avanzati",
         "nav_portfolio_tool": "Analizzatore Portafoglio",
+        "nav_portfolio_balance": "Bilanciamento Portafoglio",
+        "nav_real_time_prices": "Prezzi in Tempo Reale",
         "nav_backtest": "Backtest",
+        "portfolio_balance_title": "Bilanciamento del Portafoglio",
         "dashboard_title": "Dashboard Finanziaria",
         "stock_analysis_title": "Analisi Dettagliata",
         "portfolio_title": "Gestione Portafoglio",
@@ -126,7 +145,20 @@ translations = {
         "risk_reduction": "Riduzione del Rischio",
         "return_maximization": "Massimizzazione del Rendimento",
         # Footer
-        "footer": "FinVision - Piattaforma Avanzata di Analisi del Mercato Azionario"
+        "footer": "FinVision - Piattaforma Avanzata di Analisi del Mercato Azionario",
+        # Real-time prices section
+        "Real-Time Prices": "Prezzi in Tempo Reale",
+        "Symbol": "Simbolo",
+        "Price": "Prezzo",
+        "Change": "Variazione",
+        "Last Update": "Ultimo Aggiornamento",
+        "Update Interval (seconds)": "Intervallo di Aggiornamento (secondi)",
+        "Auto-updating every": "Aggiornamento automatico ogni",
+        "seconds": "secondi",
+        "Note: Prices are fetched from Yahoo Finance API and may be delayed by a few minutes for some exchanges.": "Nota: I prezzi sono recuperati dall'API di Yahoo Finance e potrebbero essere ritardati di alcuni minuti per alcuni mercati.",
+        "About Real-Time Updates": "Informazioni sugli Aggiornamenti in Tempo Reale",
+        "This table automatically updates every": "Questa tabella si aggiorna automaticamente ogni",
+        "Trend": "Tendenza"
     },
     "es": {  # Spanish
         "app_title": "FinVision - Análisis del Mercado Bursátil",
@@ -139,7 +171,10 @@ translations = {
         "nav_advanced_tools": "Herramientas Avanzadas",
         "nav_charts": "Gráficos Avanzados",
         "nav_portfolio_tool": "Analizador de Cartera",
+        "nav_portfolio_balance": "Equilibrio de Cartera",
+        "nav_real_time_prices": "Precios en Tiempo Real",
         "nav_backtest": "Backtest",
+        "portfolio_balance_title": "Equilibrio de Cartera",
         "dashboard_title": "Panel Financiero",
         "stock_analysis_title": "Análisis Detallado",
         "portfolio_title": "Gestor de Portafolio",
@@ -188,7 +223,20 @@ translations = {
         "risk_reduction": "Reducción de Riesgo",
         "return_maximization": "Maximización del Rendimiento",
         # Footer
-        "footer": "FinVision - Plataforma Avanzada de Análisis del Mercado Bursátil"
+        "footer": "FinVision - Plataforma Avanzada de Análisis del Mercado Bursátil",
+        # Real-time prices section
+        "Real-Time Prices": "Precios en Tiempo Real",
+        "Symbol": "Símbolo",
+        "Price": "Precio",
+        "Change": "Cambio",
+        "Last Update": "Última Actualización",
+        "Update Interval (seconds)": "Intervalo de Actualización (segundos)",
+        "Auto-updating every": "Actualización automática cada",
+        "seconds": "segundos",
+        "Note: Prices are fetched from Yahoo Finance API and may be delayed by a few minutes for some exchanges.": "Nota: Los precios se obtienen de la API de Yahoo Finance y pueden retrasarse unos minutos para algunos mercados.",
+        "About Real-Time Updates": "Acerca de las Actualizaciones en Tiempo Real",
+        "This table automatically updates every": "Esta tabla se actualiza automáticamente cada",
+        "Trend": "Tendencia"
     },
     "fr": {  # French
         "app_title": "FinVision - Analyse du Marché Boursier",
@@ -201,7 +249,10 @@ translations = {
         "nav_advanced_tools": "Outils Avancés",
         "nav_charts": "Graphiques Avancés",
         "nav_portfolio_tool": "Analyseur de Portefeuille",
+        "nav_portfolio_balance": "Équilibrage de Portefeuille",
+        "nav_real_time_prices": "Prix en Temps Réel",
         "nav_backtest": "Backtest",
+        "portfolio_balance_title": "Équilibrage de Portefeuille",
         "dashboard_title": "Tableau de Bord Financier",
         "stock_analysis_title": "Analyse Détaillée",
         "portfolio_title": "Gestionnaire de Portefeuille",
@@ -250,7 +301,20 @@ translations = {
         "risk_reduction": "Réduction des Risques",
         "return_maximization": "Maximisation du Rendement",
         # Footer
-        "footer": "FinVision - Plateforme Avancée d'Analyse du Marché Boursier"
+        "footer": "FinVision - Plateforme Avancée d'Analyse du Marché Boursier",
+        # Real-time prices section
+        "Real-Time Prices": "Prix en Temps Réel",
+        "Symbol": "Symbole",
+        "Price": "Prix",
+        "Change": "Variation",
+        "Last Update": "Dernière Mise à Jour",
+        "Update Interval (seconds)": "Intervalle de Mise à Jour (secondes)",
+        "Auto-updating every": "Mise à jour automatique toutes les",
+        "seconds": "secondes",
+        "Note: Prices are fetched from Yahoo Finance API and may be delayed by a few minutes for some exchanges.": "Note: Les prix sont récupérés depuis l'API Yahoo Finance et peuvent être retardés de quelques minutes pour certains marchés.",
+        "About Real-Time Updates": "À propos des Mises à Jour en Temps Réel",
+        "This table automatically updates every": "Ce tableau se met à jour automatiquement toutes les",
+        "Trend": "Tendance"
     }
 }
 
