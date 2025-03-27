@@ -47,6 +47,73 @@ def calculate_moving_averages(df):
     
     return sma_20, sma_50, sma_200, ema_20
 
+def calculate_stochastic_oscillator(df, k_window=14, d_window=3):
+    """Calculate Stochastic Oscillator"""
+    # Calculate %K
+    low_min = df['Low'].rolling(window=k_window).min()
+    high_max = df['High'].rolling(window=k_window).max()
+    
+    # Fast %K
+    k_fast = 100 * ((df['Close'] - low_min) / (high_max - low_min))
+    
+    # Slow %K (i.e., %K smoothed)
+    k_slow = k_fast.rolling(window=d_window).mean()
+    
+    # %D (i.e., %D smoothed)
+    d_slow = k_slow.rolling(window=d_window).mean()
+    
+    return k_slow, d_slow
+
+def calculate_atr(df, window=14):
+    """Calculate Average True Range (ATR)"""
+    high_low = df['High'] - df['Low']
+    high_close = np.abs(df['High'] - df['Close'].shift())
+    low_close = np.abs(df['Low'] - df['Close'].shift())
+    
+    ranges = pd.concat([high_low, high_close, low_close], axis=1)
+    true_range = np.max(ranges, axis=1)
+    
+    atr = true_range.rolling(window=window).mean()
+    return atr
+
+def calculate_obv(df):
+    """Calculate On-Balance Volume (OBV)"""
+    obv = np.zeros(len(df))
+    obv[0] = df['Volume'].iloc[0]
+    
+    for i in range(1, len(df)):
+        if df['Close'].iloc[i] > df['Close'].iloc[i-1]:
+            obv[i] = obv[i-1] + df['Volume'].iloc[i]
+        elif df['Close'].iloc[i] < df['Close'].iloc[i-1]:
+            obv[i] = obv[i-1] - df['Volume'].iloc[i]
+        else:
+            obv[i] = obv[i-1]
+    
+    return pd.Series(obv, index=df.index)
+
+def calculate_fibonacci_levels(df, trend='downtrend'):
+    """Calculate Fibonacci Retracement Levels"""
+    if trend == 'downtrend':
+        high = df['High'].max()
+        low = df['Low'].min()
+    else:  # uptrend
+        high = df['High'].iloc[-int(len(df) * 0.2):].max()  # Last 20% of data
+        low = df['Low'].iloc[-int(len(df) * 0.2):].min()    # Last 20% of data
+    
+    diff = high - low
+    
+    levels = {
+        '0.0': low,
+        '0.236': low + 0.236 * diff,
+        '0.382': low + 0.382 * diff,
+        '0.5': low + 0.5 * diff,
+        '0.618': low + 0.618 * diff,
+        '0.786': low + 0.786 * diff,
+        '1.0': high
+    }
+    
+    return levels
+
 def display_technical_indicators(symbol, timeframe, detailed=False):
     """Display technical indicators for a stock"""
     try:
@@ -57,35 +124,126 @@ def display_technical_indicators(symbol, timeframe, detailed=False):
             st.error(f"No data available for {symbol}")
             return
         
-        # Calculate indicators
+        # Calculate standard indicators
         rsi = calculate_rsi(df)
         macd, signal_line, histogram = calculate_macd(df)
         upper_band, middle_band, lower_band = calculate_bollinger_bands(df)
         sma_20, sma_50, sma_200, ema_20 = calculate_moving_averages(df)
         
-        # Create indicators data frame for display
-        last_index = df.index[-1]
-        indicators_data = {
-            'Indicator': ['RSI (14)', 'MACD', 'Signal Line', 'BB Upper', 'BB Middle', 'BB Lower', 'SMA (20)', 'SMA (50)', 'SMA (200)', 'EMA (20)'],
-            'Value': [
-                f"{rsi.iloc[-1]:.2f}",
-                f"{macd.iloc[-1]:.2f}",
-                f"{signal_line.iloc[-1]:.2f}",
-                f"${upper_band.iloc[-1]:.2f}",
-                f"${middle_band.iloc[-1]:.2f}",
-                f"${lower_band.iloc[-1]:.2f}",
-                f"${sma_20.iloc[-1]:.2f}",
-                f"${sma_50.iloc[-1]:.2f}",
-                f"${sma_200.iloc[-1]:.2f}",
-                f"${ema_20.iloc[-1]:.2f}"
-            ]
-        }
+        # Calculate additional indicators
+        k_slow, d_slow = calculate_stochastic_oscillator(df)
+        atr = calculate_atr(df)
+        obv = calculate_obv(df)
+        fibonacci_levels = calculate_fibonacci_levels(df)
         
-        indicators_df = pd.DataFrame(indicators_data)
+        # Create a tab layout for indicators
+        standard_tab, advanced_tab = st.tabs(["Standard Indicators", "Advanced Indicators"])
         
-        # Display indicators in a table
-        st.subheader("Technical Indicators")
-        st.dataframe(indicators_df, use_container_width=True)
+        with standard_tab:
+            # Create indicators data frame for display
+            indicators_data = {
+                'Indicator': ['RSI (14)', 'MACD', 'Signal Line', 'BB Upper', 'BB Middle', 'BB Lower', 'SMA (20)', 'SMA (50)', 'SMA (200)', 'EMA (20)'],
+                'Value': [
+                    f"{rsi.iloc[-1]:.2f}",
+                    f"{macd.iloc[-1]:.2f}",
+                    f"{signal_line.iloc[-1]:.2f}",
+                    f"${upper_band.iloc[-1]:.2f}",
+                    f"${middle_band.iloc[-1]:.2f}",
+                    f"${lower_band.iloc[-1]:.2f}",
+                    f"${sma_20.iloc[-1]:.2f}",
+                    f"${sma_50.iloc[-1]:.2f}",
+                    f"${sma_200.iloc[-1]:.2f}",
+                    f"${ema_20.iloc[-1]:.2f}"
+                ]
+            }
+            
+            indicators_df = pd.DataFrame(indicators_data)
+            
+            # Display standard indicators in a table
+            st.subheader("Standard Technical Indicators")
+            st.dataframe(indicators_df, use_container_width=True)
+        
+        with advanced_tab:
+            # Create advanced indicators data frame
+            advanced_data = {
+                'Indicator': [
+                    'Stochastic %K', 
+                    'Stochastic %D', 
+                    'ATR (14)', 
+                    'OBV'
+                ],
+                'Value': [
+                    f"{k_slow.iloc[-1]:.2f}",
+                    f"{d_slow.iloc[-1]:.2f}",
+                    f"{atr.iloc[-1]:.2f}",
+                    f"{obv.iloc[-1]:.0f}"
+                ]
+            }
+            
+            advanced_df = pd.DataFrame(advanced_data)
+            
+            # Display advanced indicators in a table
+            st.subheader("Advanced Technical Indicators")
+            st.dataframe(advanced_df, use_container_width=True)
+            
+            # Display Fibonacci levels
+            st.subheader("Fibonacci Retracement Levels")
+            fib_data = {
+                'Level': list(fibonacci_levels.keys()),
+                'Price': [f"${v:.2f}" for v in fibonacci_levels.values()]
+            }
+            fib_df = pd.DataFrame(fib_data)
+            st.dataframe(fib_df, use_container_width=True)
+            
+            # Allow user to customize indicators
+            st.subheader("Customize Indicators")
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                rsi_period = st.slider("RSI Period", min_value=5, max_value=30, value=14, step=1)
+                macd_fast = st.slider("MACD Fast Period", min_value=5, max_value=20, value=12, step=1)
+                macd_slow = st.slider("MACD Slow Period", min_value=15, max_value=40, value=26, step=1)
+            
+            with col2:
+                bb_period = st.slider("Bollinger Period", min_value=5, max_value=30, value=20, step=1)
+                bb_std = st.slider("Bollinger StdDev", min_value=1.0, max_value=4.0, value=2.0, step=0.1)
+                stoch_period = st.slider("Stochastic Period", min_value=5, max_value=30, value=14, step=1)
+            
+            # Recalculate with custom parameters if user clicks the button
+            if st.button("Recalculate Indicators", use_container_width=True):
+                # Recalculate with custom parameters
+                rsi_custom = calculate_rsi(df, window=rsi_period)
+                macd_custom, signal_line_custom, histogram_custom = calculate_macd(df, fast=macd_fast, slow=macd_slow)
+                upper_band_custom, middle_band_custom, lower_band_custom = calculate_bollinger_bands(df, window=bb_period, std_dev=bb_std)
+                k_slow_custom, d_slow_custom = calculate_stochastic_oscillator(df, k_window=stoch_period)
+                
+                # Show custom results
+                custom_data = {
+                    'Indicator': [
+                        f'RSI ({rsi_period})', 
+                        f'MACD ({macd_fast}/{macd_slow})', 
+                        'Signal Line', 
+                        f'BB Upper ({bb_period}, {bb_std})', 
+                        f'BB Middle ({bb_period})',
+                        f'BB Lower ({bb_period}, {bb_std})',
+                        f'Stochastic %K ({stoch_period})',
+                        f'Stochastic %D ({stoch_period})'
+                    ],
+                    'Value': [
+                        f"{rsi_custom.iloc[-1]:.2f}",
+                        f"{macd_custom.iloc[-1]:.2f}",
+                        f"{signal_line_custom.iloc[-1]:.2f}",
+                        f"${upper_band_custom.iloc[-1]:.2f}",
+                        f"${middle_band_custom.iloc[-1]:.2f}",
+                        f"${lower_band_custom.iloc[-1]:.2f}",
+                        f"{k_slow_custom.iloc[-1]:.2f}",
+                        f"{d_slow_custom.iloc[-1]:.2f}"
+                    ]
+                }
+                
+                custom_df = pd.DataFrame(custom_data)
+                st.subheader("Custom Parameters Results")
+                st.dataframe(custom_df, use_container_width=True)
         
         # Display interpretation if detailed view
         if detailed:

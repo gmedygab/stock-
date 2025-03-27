@@ -56,12 +56,15 @@ def display_stock_search():
     """
     Display a search box for stocks and return the selected stock symbol
     """
-    query = st.text_input("Search for a stock (symbol or name)", "")
+    # Access translation function if available in session state
+    t = st.session_state.get('translate', lambda x: x)
+    
+    query = st.text_input(t("Search for a stock (symbol or name)"), "")
     
     search_results = search_stocks(query)
     
     if not search_results:
-        st.warning("No stocks found. Try another search term.")
+        st.warning(t("No stocks found. Try another search term."))
         return st.session_state.selected_stock
     
     options = [f"{k}: {v}" for k, v in search_results.items()]
@@ -74,7 +77,7 @@ def display_stock_search():
             break
     
     selected = st.selectbox(
-        "Select a stock",
+        t("Select a stock"),
         options=options,
         index=default_index
     )

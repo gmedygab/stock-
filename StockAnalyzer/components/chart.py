@@ -8,16 +8,19 @@ from components.technical_indicators import calculate_rsi, calculate_macd, calcu
 
 def display_stock_chart(symbol, timeframe, detailed=False):
     """
-    Display an interactive stock chart with selected technical indicators
+    Display an interactive stock chart with selected technical indicators, including potential pre/after-hours data.
     """
     try:
-        # Fetch stock data
+        # Fetch stock data (assuming get_stock_data now handles pre/post market data)
         df = get_stock_data(symbol, timeframe)
-        
+
         if df.empty:
             st.error(f"No data available for {symbol}")
             return
-        
+
+        # Identify pre/after-hours data (assuming data is already correctly labeled)
+        df['RegularHours'] = (df.index.time >= pd.to_datetime('09:30:00').time()) & (df.index.time <= pd.to_datetime('16:00:00').time())
+
         # Create a subplot with 2 rows (price chart and volume)
         fig = make_subplots(
             rows=2, 
@@ -27,23 +30,40 @@ def display_stock_chart(symbol, timeframe, detailed=False):
             subplot_titles=('Price', 'Volume'),
             row_heights=[0.8, 0.2]
         )
-        
-        # Add candlestick chart with improved colors
+
+        # Add candlestick chart with improved colors, separating regular and extended hours
         fig.add_trace(
             go.Candlestick(
-                x=df.index,
-                open=df['Open'],
-                high=df['High'],
-                low=df['Low'],
-                close=df['Close'],
-                name="OHLC",
-                increasing=dict(line=dict(color='rgba(0, 180, 0, 1)'), fillcolor='rgba(0, 180, 0, 0.7)'),  # Brighter green
-                decreasing=dict(line=dict(color='rgba(220, 0, 0, 1)'), fillcolor='rgba(220, 0, 0, 0.7)'),  # Brighter red
+                x=df[df['RegularHours']].index,
+                open=df[df['RegularHours']]['Open'],
+                high=df[df['RegularHours']]['High'],
+                low=df[df['RegularHours']]['Low'],
+                close=df[df['RegularHours']]['Close'],
+                name="Regular Hours",
+                increasing=dict(line=dict(color='rgba(0, 180, 0, 1)'), fillcolor='rgba(0, 180, 0, 0.7)'),
+                decreasing=dict(line=dict(color='rgba(220, 0, 0, 1)'), fillcolor='rgba(220, 0, 0, 0.7)'),
                 showlegend=False
             ),
             row=1, col=1
         )
-        
+
+        fig.add_trace(
+            go.Candlestick(
+                x=df[~df['RegularHours']].index,
+                open=df[~df['RegularHours']]['Open'],
+                high=df[~df['RegularHours']]['High'],
+                low=df[~df['RegularHours']]['Low'],
+                close=df[~df['RegularHours']]['Close'],
+                name="Extended Hours",
+                increasing=dict(line=dict(color='rgba(0, 180, 0, 0.5)'), fillcolor='rgba(0, 180, 0, 0.3)'),
+                decreasing=dict(line=dict(color='rgba(220, 0, 0, 0.5)'), fillcolor='rgba(220, 0, 0, 0.3)'),
+                opacity=0.7,
+                showlegend=False
+            ),
+            row=1, col=1
+        )
+
+
         # Add volume bars with color based on price movement
         volume_colors = []
         for i in range(len(df)):
@@ -54,7 +74,7 @@ def display_stock_chart(symbol, timeframe, detailed=False):
                     volume_colors.append('rgba(220, 0, 0, 0.5)')  # Red for down days
             else:
                 volume_colors.append('rgba(100, 100, 255, 0.5)')  # Default color for first day
-                
+
         fig.add_trace(
             go.Bar(
                 x=df.index,
@@ -65,14 +85,14 @@ def display_stock_chart(symbol, timeframe, detailed=False):
             ),
             row=2, col=1
         )
-        
+
         # Technical indicators (either based on user selection or show most important ones if detailed)
         if detailed:
             # Add all indicators
-            
+
             # Moving averages with improved colors and width
             sma_20, sma_50, sma_200, ema_20 = calculate_moving_averages(df)
-            
+
             fig.add_trace(
                 go.Scatter(
                     x=df.index,
@@ -82,7 +102,7 @@ def display_stock_chart(symbol, timeframe, detailed=False):
                 ),
                 row=1, col=1
             )
-            
+
             fig.add_trace(
                 go.Scatter(
                     x=df.index,
@@ -92,7 +112,7 @@ def display_stock_chart(symbol, timeframe, detailed=False):
                 ),
                 row=1, col=1
             )
-            
+
             fig.add_trace(
                 go.Scatter(
                     x=df.index,
@@ -102,7 +122,7 @@ def display_stock_chart(symbol, timeframe, detailed=False):
                 ),
                 row=1, col=1
             )
-            
+
             fig.add_trace(
                 go.Scatter(
                     x=df.index,
@@ -112,10 +132,10 @@ def display_stock_chart(symbol, timeframe, detailed=False):
                 ),
                 row=1, col=1
             )
-            
+
             # Bollinger Bands with improved colors
             upper_band, middle_band, lower_band = calculate_bollinger_bands(df)
-            
+
             fig.add_trace(
                 go.Scatter(
                     x=df.index,
@@ -126,7 +146,7 @@ def display_stock_chart(symbol, timeframe, detailed=False):
                 ),
                 row=1, col=1
             )
-            
+
             fig.add_trace(
                 go.Scatter(
                     x=df.index,
@@ -137,7 +157,7 @@ def display_stock_chart(symbol, timeframe, detailed=False):
                 ),
                 row=1, col=1
             )
-            
+
             fig.add_trace(
                 go.Scatter(
                     x=df.index,
@@ -150,11 +170,11 @@ def display_stock_chart(symbol, timeframe, detailed=False):
                 ),
                 row=1, col=1
             )
-            
+
         else:
             # Add only the most important indicators for the basic view
             sma_20, _, _, _ = calculate_moving_averages(df)
-            
+
             fig.add_trace(
                 go.Scatter(
                     x=df.index,
@@ -164,7 +184,7 @@ def display_stock_chart(symbol, timeframe, detailed=False):
                 ),
                 row=1, col=1
             )
-        
+
         # Configure layout with improved styling
         fig.update_layout(
             title=f"{symbol} Stock Price ({timeframe})",
@@ -190,21 +210,21 @@ def display_stock_chart(symbol, timeframe, detailed=False):
                 font_family="Arial"
             )
         )
-        
+
         # Configure y-axes
         fig.update_yaxes(title_text="Price ($)", row=1, col=1)
         fig.update_yaxes(title_text="Volume", row=2, col=1)
-        
+
         # Update background colors
         fig.update_layout(
             xaxis_rangeslider_visible=False,
             plot_bgcolor='rgba(240, 240, 240, 0.1)',  # Very light gray
             paper_bgcolor='rgba(0, 0, 0, 0)',
         )
-        
+
         # Display the chart
         st.plotly_chart(fig, use_container_width=True)
-        
+
         # Add chart legend/explanation if detailed view
         if detailed:
             legend_html = """
@@ -221,6 +241,6 @@ def display_stock_chart(symbol, timeframe, detailed=False):
             </div>
             """
             st.markdown(legend_html, unsafe_allow_html=True)
-        
+
     except Exception as e:
         st.error(f"Error displaying chart: {str(e)}")

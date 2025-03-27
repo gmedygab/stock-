@@ -216,11 +216,43 @@ def display_portfolio():
                 # Calculate total return
                 total_return = ((current_price - avg_cost) / avg_cost) * 100
                 
+                # Get pre-market and after-market data (if available)
+                try:
+                    stock_info = yf.Ticker(symbol).info
+                    
+                    # Pre-market data (variazione rispetto alla chiusura del giorno precedente)
+                    pre_market_price = stock_info.get('preMarketPrice', None)
+                    pre_market_change_percent = stock_info.get('preMarketChangePercent', None)
+                    
+                    # After-market data (variazione rispetto alla chiusura del giorno stesso)
+                    post_market_price = stock_info.get('postMarketPrice', None)
+                    post_market_change_percent = stock_info.get('postMarketChangePercent', None)
+                    
+                    # Combined pre/after market data with proper formatting
+                    pre_market_combined = "N/A"
+                    post_market_combined = "N/A"
+                    
+                    # Format pre-market data if available - simple percentage format
+                    if pre_market_change_percent is not None:
+                        change_sign = "+" if pre_market_change_percent > 0 else ""
+                        pre_market_combined = f"{change_sign}{pre_market_change_percent*100:.2f}%"
+                    
+                    # Format after-market data if available - simple percentage format
+                    if post_market_change_percent is not None:
+                        change_sign = "+" if post_market_change_percent > 0 else ""
+                        post_market_combined = f"{change_sign}{post_market_change_percent*100:.2f}%"
+                    
+                except Exception as e:
+                    pre_market_combined = "N/A"
+                    post_market_combined = "N/A"
+                    
                 portfolio_data.append({
                     'Symbol': symbol,
                     'Shares': shares,
                     'Avg Price': f"${avg_cost:.2f}",
                     'Current Price': f"${current_price:.2f}",
+                    'Pre-Market': pre_market_combined,
+                    'After-Market': post_market_combined,
                     'Position Value': f"${position_value:.2f}",
                     'Daily Change %': f"{daily_change:.2f}%",
                     'Total Return %': f"{total_return:.2f}%"
@@ -235,15 +267,52 @@ def display_portfolio():
             
             # Style the dataframe
             def highlight_performance(val):
-                if isinstance(val, str) and '%' in val:
-                    val_num = float(val.replace('%', ''))
-                    if val_num > 0:
-                        return 'background-color: rgba(0, 255, 0, 0.2)'
-                    elif val_num < 0:
-                        return 'background-color: rgba(255, 0, 0, 0.2)'
+                # Per valori percentuali o stringhe con variazioni percentuali
+                try:
+                    if isinstance(val, str) and '%' in val:
+                        # Caso 1: Valori con formato "+/-X.XX%" (come ad esempio le colonne Pre-Market/After-Market)
+                        if val.startswith('+') or val.startswith('-'):
+                            val_str = val.split('%')[0].replace('+', '')
+                            val_num = float(val_str)
+                            if val_num > 0:
+                                return 'background-color: rgba(0, 255, 0, 0.2)'
+                            elif val_num < 0:
+                                return 'background-color: rgba(255, 0, 0, 0.2)'
+                            return ''
+                            
+                        # Caso 2: Se c'è un formato con parentesi come "X.XX% ($Y.YY)" o "$Y.YY (X.XX%)"
+                        if '(' in val and ')' in val:
+                            # Estrai la parte percentuale - può essere nella parentesi o prima
+                            if '%' in val.split('(')[0]:
+                                # Formato: "X.XX% ($Y.YY)"
+                                val_str = val.split('%')[0].replace('+', '')
+                                val_num = float(val_str)
+                            else:
+                                # Formato: "$Y.YY (X.XX%)" o simile
+                                percentage_part = val[val.find('(')+1:val.find(')')].strip()
+                                if '%' in percentage_part:
+                                    val_str = percentage_part.split('%')[0].replace('+', '')
+                                    val_num = float(val_str)
+                                else:
+                                    # Non c'è percentuale nella parentesi
+                                    return ''
+                        else:
+                            # Formato semplice "X.XX%"
+                            val_str = val.replace('%', '').replace('+', '')
+                            val_num = float(val_str)
+                            
+                        # Applica la colorazione in base al valore
+                        if val_num > 0:
+                            return 'background-color: rgba(0, 255, 0, 0.2)'
+                        elif val_num < 0:
+                            return 'background-color: rgba(255, 0, 0, 0.2)'
+                except:
+                    # In caso di errore non applicare formattazione
+                    pass
+                
                 return ''
             
-            styled_df = df.style.applymap(highlight_performance, subset=['Daily Change %', 'Total Return %'])
+            styled_df = df.style.map(highlight_performance, subset=['Daily Change %', 'Total Return %', 'Pre-Market', 'After-Market'])
             
             st.dataframe(styled_df, use_container_width=True)
             
@@ -338,6 +407,9 @@ def display_portfolio():
                 current_shares = st.session_state.portfolio[remove_symbol]['shares']
                 
                 remove_all = st.checkbox("Remove all shares")
+                
+                # Initialize remove_shares
+                remove_shares = 0.0
                 
                 if not remove_all:
                     remove_shares = st.number_input(

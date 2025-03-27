@@ -1,0 +1,53 @@
+After-Hours Trading (After-Market) e Pre-Market sono due sessioni di trading che avvengono al di fuori degli orari regolari del mercato azionario. Ecco una spiegazione dettagliata:
+
+1. After-Hours Trading (After-Market)
+Quando si svolge: Dopo la chiusura del mercato regolare (negli USA, dopo le 16:00 EST fino alle 20:00 EST, ma può variare).
+
+Caratteristiche:
+
+Volume di scambi generalmente più basso rispetto all’orario normale.
+
+Maggiore volatilità perché meno partecipanti sono attivi.
+
+Spread bid-ask (differenza tra prezzo di acquisto e vendita) più ampi.
+
+Perché esiste: Consente agli investitori di reagire a notizie pubblicate dopo la chiusura del mercato (es. report trimestrali, annunci societari).
+
+Piattaforme: Offerto da broker come E*TRADE, TD Ameritrade, Interactive Brokers, ma non tutti i titoli sono negoziabili.
+
+2. Pre-Market Trading
+Quando si svolge: Prima dell’apertura del mercato regolare (negli USA, dalle 4:00 EST alle 9:30 EST).
+
+Caratteristiche:
+
+Volume ancora più basso rispetto all’after-hours.
+
+Alta volatilità, soprattutto in reazione a notizie notturne (es. dati macroeconomici, risultati societari esteri).
+
+Spread bid-ask molto ampi.
+
+Perché esiste: Permette di posizionarsi prima di eventi chiave (es. earnings, riunioni della Fed).
+
+Limitazioni: Alcuni broker permettono ordini solo limitati (non market orders) per evitare esecuzioni a prezzi sfavorevoli.
+
+Differenze chiave:
+Orari: Pre-market è prima dell’apertura; after-hours è dopo la chiusura.
+
+Liquidità: Spesso più bassa nel pre-market rispetto all’after-hours.
+
+Catalizzatori: Il pre-market reagisce a notizie notturne, l’after-hours a notizie post-mercato.
+
+Vantaggi:
+Reagire rapidamente a notizie.
+
+Opportunità di prezzi migliori (ma con rischi).
+
+Rischi:
+Volatilità estrema: Piccoli ordini possono muovere i prezzi.
+
+Bassa liquidità: Difficoltà a eseguire ordini grandi senza impattare il prezzo.
+
+Limitazioni: Non tutti i titoli o broker supportano queste sessioni.
+
+Esempio pratico:
+Se Tesla annuncia utili sorprendenti dopo la chiusura, il prezzo potrebbe salire nell’after-hours. Un investitore potrebbe comprare in after-hours sperando che il trend continui il giorno dopo, ma con il rischio di un “gap down” se il mercato reagisce diversamente in pre-market.

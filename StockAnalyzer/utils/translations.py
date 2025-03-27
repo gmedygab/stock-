@@ -12,6 +12,9 @@ translations = {
         "nav_portfolio": "Portfolio",
         "nav_portfolio_analysis": "Portfolio Analysis",
         "nav_market_overview": "Market Overview",
+        "nav_advanced_tools": "Advanced Tools",
+        "nav_charts": "Advanced Charts",
+        "nav_portfolio_tool": "Portfolio Analyzer",
         "nav_backtest": "Backtest",
         "dashboard_title": "Financial Dashboard",
         "stock_analysis_title": "Detailed Analysis",
@@ -71,6 +74,9 @@ translations = {
         "nav_portfolio": "Portafoglio",
         "nav_portfolio_analysis": "Analisi Portafoglio",
         "nav_market_overview": "Panoramica Mercato",
+        "nav_advanced_tools": "Strumenti Avanzati",
+        "nav_charts": "Grafici Avanzati",
+        "nav_portfolio_tool": "Analizzatore Portafoglio",
         "nav_backtest": "Backtest",
         "dashboard_title": "Dashboard Finanziaria",
         "stock_analysis_title": "Analisi Dettagliata",
@@ -130,6 +136,9 @@ translations = {
         "nav_portfolio": "Portafolio",
         "nav_portfolio_analysis": "Análisis de Portafolio",
         "nav_market_overview": "Visión del Mercado",
+        "nav_advanced_tools": "Herramientas Avanzadas",
+        "nav_charts": "Gráficos Avanzados",
+        "nav_portfolio_tool": "Analizador de Cartera",
         "nav_backtest": "Backtest",
         "dashboard_title": "Panel Financiero",
         "stock_analysis_title": "Análisis Detallado",
@@ -189,6 +198,9 @@ translations = {
         "nav_portfolio": "Portefeuille",
         "nav_portfolio_analysis": "Analyse du Portefeuille",
         "nav_market_overview": "Aperçu du Marché",
+        "nav_advanced_tools": "Outils Avancés",
+        "nav_charts": "Graphiques Avancés",
+        "nav_portfolio_tool": "Analyseur de Portefeuille",
         "nav_backtest": "Backtest",
         "dashboard_title": "Tableau de Bord Financier",
         "stock_analysis_title": "Analyse Détaillée",
@@ -270,3 +282,32 @@ def get_translation(key, lang_code):
         except KeyError:
             # Return the key itself if not found in any language
             return key
+
+def translate_ui(text, lang_code):
+    """
+    Translate any UI text based on current language.
+    This function allows for translating any static text in the application,
+    not just predefined keys.
+    
+    Args:
+        text (str): The text to translate (in English)
+        lang_code (str): The language code (e.g., 'en', 'it')
+        
+    Returns:
+        str: The translated text if a translation exists, otherwise the original text
+    """
+    if lang_code == "en":
+        return text
+        
+    # Create a simple hash for the text to use as a temporary key
+    import hashlib
+    temp_key = f"dynamic_{hashlib.md5(text.encode()).hexdigest()[:8]}"
+    
+    # Check if we have a translation for this text
+    # First look for direct matches in the translations dictionary
+    for key, value in translations["en"].items():
+        if value == text and key in translations[lang_code]:
+            return translations[lang_code][key]
+    
+    # If no match found, return the original text
+    return text
